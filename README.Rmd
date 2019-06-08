@@ -1,0 +1,77 @@
+---
+title: "README"
+author: "Gelord13"
+date: "June 5, 2019"
+output: html_document
+---
+
+Authorship Details:
+
+Gelord13 is an Environmental Science an Policy student with an interest in Geographic
+Infromation systems.
+
+
+Overview:
+
+The United States government established the Superfund program to fund the cleanup of sites contaminated sites. These sites have 
+been exposed to hazardous waste or pollutants and are considered the nation's most contaminated sites. In order to fund the cleanup 
+of these sites, the government works to establish who is responsible for the site and then get them to fund the cleanup. Despite 
+programs being in place to deal with these sites, the sheer number of sites and difficulties getting parties to take responsibility 
+mean that there are still 1337 sites on the National Priorities Sites, sites that are currently open or ongoing with their 
+settlement agreements. 
+	
+The EPA currently provides a map of all 1337 sites in the United States and its territories. This interactive map has information 
+on the location, NPL status, category, parties involved, and the estimated cost of cleanup. However, one thing the EPA does not do 
+is rank the states based on the number/severity of the NPS sites. The EPA does not do this in order to not cause contention with the
+states that they often have to work with. However, it is important to know what states are having the most trouble and to examine 
+possible reasons why.
+	
+In order to examine these Superfund sites, we would like to re-create the EPA's map but add in additional information. We would 
+first like to add the HRS (Hazard Ranking System) score to each site. We would then like to look at any data to add buffer areas 
+around each site such that selecting the site on a map will display a buffer showing the theoretical affected area. Then, we would 
+like to find both the state with the most superfund sites and the state with the most severe HRS level sites. Finally, we would like
+to compare the state rankings with economic information; GDP, GDP per capita, and number of firms in the state. We believe that 
+there might be a connection between this economic data and the number of sites. More importantly, these rankings might give us 
+insight into what states are struggling with environmental issues and why.
+
+
+Goals & Objectives:
+
+The purpose of this project is to make two interactive maps. One of the united states that allows us to sort by the state and the 
+HRS level of site. We also want this map to give us the name and address of the superfund site. The second map is for a proof of
+concept. It will be a map of all the superfund sites in one state with a buffer around each site to represent possible 
+contamination radii. This map will also have the option of selecting site via HRS level and will have the option to place a 1km or a
+5km buffer around each point. This will make it easier to make actual buffers for possible affected areas.
+
+
+Data & Description:
+
+For these maps we will be using R shiny and leaflet to create these maps. The data we will use is superfund data shapefile from the 
+United States Environmental protection agency, called "superfund_npl". This data is provided in this repository. 
+From this data we will filter out all sites located in the state of Illinois into a serparate data frame. We will also use
+the us_states data from the spData package. Finally, we will create 1km and 5km buffers around each of the points in the 
+Illinois data set. 
+
+
+Results:
+
+From our first map, we can see that New Jersey has the most Superfund sites by far, followed by Pennsylvania, then New York,
+and California. When we look at superfund sites with an HRS score of over 50, the state with the highest is still New Jersey with 52
+sites, followed by New York with 37, Pensylvania with 31, and Washington with 30. One interseting observation from this is that 
+Washington has 68 Superfund sites total but 30 of them, 44%, have an HRS score of over 50. Finally, the state with the highest 
+HRS scroed site is Utah, with the Murray Smelter site having a score of 86.6. THe next three highest sites are all in Missouri with
+scores of 84.91, 76.81, and 76.81. The fifth highest is in New Jersey with a score of 75.6. 
+
+
+
+Future Work:
+
+These maps are a good start but there are improvements that can be made. Ideally, we would like to turn the first map into a much
+more comprehensive overview of each site. The best map would be on in which a user could click on a point and be taken to a new map
+and data table or data page. This new map would be a closer view of the superfund site with the option to show buffer around the 
+sitess These buffers would be determined for each site individually, based on the chemicals involved and the severity of the spill.
+This new page would also contain all the information about the spill. This information would contain historical information about 
+each site, when cleanup began (if it has), how much money has been alotted for cleanup of the site, all the chemical information
+from each site, the effects of these chemical on the environment, and how many people (if any) have been affected by the spill.
+Unfortunately, this will take a tremendous amount of scaping and compiling of data. Some of which (like the lawsuits or the medical
+issues of those affected by the spills), might not be avialable to thte public.  

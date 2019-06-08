@@ -1,0 +1,325 @@
+---
+title: "Superfund project"
+author: "Gabe Lord"
+date: "May 31, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(stringr)
+library(testthat)
+library(tictoc)
+library(knitr)
+library(maps)
+library(forcats)
+library(lubridate)
+library(ggmap)
+library(RMariaDB)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(SparseM)
+library(quantreg)
+library(stargazer)
+library(haven)
+library(moderndive)
+library(data.table)
+library(gamlr)
+library(glmnet)
+library(caret)
+library(rsq)
+library(assertthat)
+library(glue)
+library(roxygen2)
+library(usethis)
+
+
+library(RPostgreSQL)
+library(postGIStools)
+library(rgdal)
+library(rgeos)
+library(sp)
+library(tmap)
+library(leaflet)
+library(raster)
+library(sf)
+library(RQGIS)
+library(shiny)
+library(spData)
+```
+
+
+```{r}
+superfund_data <- read.csv('superfund_npl.csv')
+
+superfund_shape <- readOGR(".", "superfund_npl")
+
+epa_regions <- readOGR(".", "Environmental_Protection_Agency_EPA_Regions")
+```
+
+```{r}
+data(us_states)
+```
+
+```{r}
+view(us_states)
+```
+
+
+```{r}
+epa_regions2 <- st_as_sf(epa_regions)
+
+superfund_shape2 <- st_as_sf(superfund_shape)
+
+us_states2 <- st_as_sf(us_states)
+```
+
+```{r}
+epa_regions3 <- st_transform(epa_regions2, 4326)
+
+superfund_shape3 <- st_transform(superfund_shape2, 4326)
+
+us_states3 <- st_transform(us_states2, 4326)
+```
+
+```{r}
+superfund_shape3 %>%
+  count('STATE')
+```
+
+```{r}
+superfund_shape3 %>%
+  filter(HRS > 49.99) %>%
+  count('STATE')
+```
+
+
+```{r}
+
+# Define UI for application that filters map points based on year and minimum population
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("EPA Superfund Sites"),
+   
+   # Sidebar with a slider input for year, numeric input for population 
+   sidebarLayout(
+      sidebarPanel(
+
+        sliderInput("hrs",
+                     "HRS by State",
+                     min = 0,
+                     max = 100,
+                     step = 1,
+                     sep = "",
+                     value = 0),
+        
+        selectInput("state", label = h3("State"),
+                  choices = list("Albama" = "AL",
+                                 "Alaska" = "AK",
+                                 "Arizona" = "AZ",
+                                 "Arkansas" = "AR",
+                                 "California" = "CA",
+                                 "Colorado" = "CO",
+                                 "Conneticut" = "CT",
+                                 "Delaware" = "DE",
+                                 "Florida" = "FL",
+                                 "Georgia" = "GA",
+                                 "Hawaii" = "HI",
+                                 "Idaho" = "ID",
+                                 "Illinois" = "IL",
+                                 "Indiana" = "IN",
+                                 "Iowa" = "IA",
+                                 "Kansas" = "KS",
+                                 "Kentucky" = "KY",
+                                 "Louisiana" = "LA",
+                                 "Maine" = "ME",
+                                 "Maryland" = "MD",
+                                 "Massachusetts" = "MA",
+                                 "Michigan" = "MI",
+                                 "Minnesota" = "MN",
+                                 "Mississippi" = "MS",
+                                 "Missouri" = "MO",
+                                 "Montana" = "MT",
+                                 "Nebraska" = "NE",
+                                 "Nevada" = "NV",
+                                 "New Hampshire" = "NH",
+                                 "New Jersey" = "NJ",
+                                 "New Mexico" = "NM",
+                                 "New York" = "NY",
+                                 "North Carolina" = "NC",
+                                 "North Dakota" = "ND",
+                                 "Ohio" = "OH",
+                                 "Oklahoma" = "OK",
+                                 "Oregon" = "OR",
+                                 "Pennsylvania" = "PA",
+                                 "Rhode Island" = "RI",
+                                 "South Carolina" = "SC",
+                                 "South Dakota" = "SD",
+                                 "Tennessee" = "TN",
+                                 "Texas" = "TX",
+                                 "Utah" = "UT",
+                                 "Vermont" = "VT",
+                                 "Virginia" = "VA",
+                                 "Washington" = "WA",
+                                 "West Virginia" = "WV",
+                                 "Wisconsin" = "WI",
+                                 "Wyoming" = "WY"))
+        
+
+      ),
+      
+      # Show the map and table
+      mainPanel(
+         leafletOutput("map1"),
+         dataTableOutput("table1")
+      )
+   )
+)
+
+# Define server logic required to draw a map and table
+server <- function(input, output) {
+
+
+  
+   output$map1 <- renderLeaflet({
+     
+     superfund_sites<- superfund_shape3%>%
+       filter(HRS > input$hrs,
+              STATE == input$state)
+    
+     leaflet(data = superfund_sites) %>%
+       addTiles() %>%
+       addMarkers(lng = superfund_sites$LONGD, lat = superfund_sites$LATD, 
+                  popup = superfund_sites$NAME) %>% 
+       addPolygons(data = us_states3) %>%
+       setView(lng = -99, lat = 45, zoom = 3)
+   })
+   
+   
+   output$table1 <- renderDataTable({
+     
+    superfund_sites<- superfund_shape3%>%
+       filter(HRS > input$hrs,
+              STATE == input$state)
+    
+    
+     
+   })
+   
+   
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+```{r}
+superfund_illinois <- superfund_shape3%>%
+  filter(STATE == "IL")
+```
+
+
+
+
+
+
+creat buffers, convert acr degrees to KM 
+1 degree lat = 110575 meters = 110.575km:
+1 degree long = 111303 meters = 111.303km: 
+https://msi.nga.mil/MSISiteContent/StaticFiles/Calculators/degree.html
+```{r}
+il_buffer_test <- st_buffer(superfund_illinois, dist = 0.1)
+il_buffer_1km <- st_buffer(superfund_illinois, dist = c(0.00904363554, 0.00898448379))
+il_buffer_5km <- st_buffer(superfund_illinois, dist = c(0.045218177, 0.04492241898))
+```
+
+```{r}
+class(il_buffer_1km)
+```
+
+
+
+```{r}
+
+# Define UI for application that filters map points based on year and minimum population
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("EPA Superfund Sites in Illinois"),
+   
+   # Sidebar with a slider input for year, numeric input for population 
+   sidebarLayout(
+      sidebarPanel(
+
+        sliderInput("hrs",
+                     "HRS of Illinois sites",
+                     min = 0,
+                     max = 100,
+                     step = 1,
+                     sep = "",
+                     value = 0)
+
+      ),
+      
+      # Show the map and table
+      mainPanel(
+         leafletOutput("map2"),
+         dataTableOutput("table2")
+      )
+   )
+)
+
+# Define server logic required to draw a map and table
+server <- function(input, output) {
+
+   
+  
+   output$map2 <- renderLeaflet({
+     
+     illinois_sf <- superfund_illinois%>%
+       filter(HRS >= input$hrs)
+     
+     il_buff_test <- il_buffer_test%>%
+       filter(HRS >= input$hrs)
+     
+      il_buff_1km <- il_buffer_1km %>%
+        filter(HRS >= input$hrs)
+      
+      il_buff_5km <- il_buffer_5km %>%
+        filter(HRS >= input$hrs)
+     
+    
+     leaflet(data = illinois_sf) %>%
+       addTiles() %>%
+       addMarkers(lng = illinois_sf$LONGD, lat = illinois_sf$LATD, 
+                  popup = illinois_sf$NAME) %>%
+       addPolygons(data = il_buff_test, group = "Test") %>%
+       addPolygons(data = il_buff_1km, group = "1 Kilometer") %>%
+       addPolygons(data = il_buff_5km, group = "5 Kilometers") %>%
+       addLayersControl( 
+          baseGroups = c("Test", "1 Kilometer", "5 Kilometers"), 
+          options = layersControlOptions(collapsed = FALSE))%>%
+      setView(lng = -89.3985, lat = 40.6331, zoom = 5)
+   })
+   
+   
+   output$table2 <- renderDataTable({
+     
+    illinois_sf <- superfund_illinois%>%
+       filter(HRS >= input$hrs)
+    
+    illinois_sf
+     
+   })
+   
+ 
+   
+   
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
